@@ -1,176 +1,286 @@
-# A brief introduction to literate programming
+# Build your first project
 
-Literate programming is an approach to software development that gives priority
-to the narrative through which a human reader understands a program. The
-presentation follows the development of ideas and their rationale, while the
-code is assembled separately in the order required by the compiler or
-interpreter. Donald E. Knuth developed the approach and described its principles
-in his 1984 paper,
-[“Literate Programming” (free PDF)](https://www.cs.tufts.edu/~nr/cs257/archive/literate-programming/01-knuth-lp.pdf).
-<!-- REVIEW 2: Call the single source a document, as the rest of the page does. -->
-Prose and code form a single document that introduces the problem, develops a
-solution, and explains the decisions that connect the two. Its structure gives
-the reader a reason to encounter each idea: what problem it addresses, what
-earlier ideas it depends on, and how it contributes to the whole.
+In this tutorial, you will write a Markdown document that explains a small Python
+program, generate the program with `unravel`, and run it. You will then change the
+Markdown and verify that the generated program follows your change.
 
-<!-- REVIEW 1, 3: Say "chunks" and "generated files", the terms used throughout the documentation. -->
-The reader should be able to follow both the implementation and the reasoning
-behind it. This includes the assumptions under which an algorithm works, the
-alternatives considered, and the constraints that shaped the design. Named code
-chunks and references connect that explanation to generated files assembled by a
-tool. The author chooses the order of exposition while remaining responsible
-for producing a correct program.
+The program prints `Hello, Tel Aviv!`. Its source is assembled from two named
+chunks in one file, `hello.md`.
 
-## A program as an explanation
+You edit `hello.md`. `unravel` expands its named chunks into
+`generated/application/main.py` and records that output in
+`generated/.unravel-manifest.json`. You will run the Python file yourself in
+step 5.
 
-Knuth treats the programmer as an author addressing an audience. The author
-chooses terminology, introduces unfamiliar ideas, and decides when the reader
-has enough context to understand a detail. A literate program can begin with an
-overall strategy, a motivating example, or a small component whose purpose is
-already clear. Its organization should serve the explanation.
+![`unravel` reads `hello.md` and writes a Python program and ownership manifest inside `generated/`.](png/input-output.png)
 
-This view connects programming with craftsmanship. In his earlier essay,
-[“Computer Programming as an Art” (1974, free PDF)](https://www.cs.bilkent.edu.tr/~canf/bilir_web/documents/knuth1974.pdf),
-Knuth discusses creativity, judgment, style, and the satisfaction of constructing
-well-designed programs. Literate programming gives that concern for the quality
-of a program's presentation a concrete form: names, explanations, and the
-sequence of ideas become deliberate parts of its design.
+## Before you start
 
-<!-- REVIEW 6: Fold the citation into the last sentence so it does not read as a fragment. -->
-Writing the explanation is also an opportunity to examine the solution. An
-author who must justify a data structure or state an algorithm's assumptions
-may discover an omission or an unresolved decision. Knuth reported that writing
-for an audience helped clarify his thinking and reduced his debugging effort.
-He presented this as his experience, while acknowledging that the approach
-might not suit everyone. It is a rationale for the method rather than a
-guarantee of fewer defects or faster development
-([Knuth, sections A and L](https://www.cs.tufts.edu/~nr/cs257/archive/literate-programming/01-knuth-lp.pdf)).
+This tutorial is for readers comfortable with Python, a terminal, and editing
+text files. The commands target Linux with Bash.
 
-## Explanatory order and program structure
+You need:
 
-<!-- REVIEW 1, 3: Use "chunk" and "generated files", and give Knuth's term once. -->
-Named code chunks connect the explanation to the generated files. Knuth calls
-these named sections; this documentation calls them chunks. References specify
-where each chunk is incorporated, independently of its position in the
-document. A reference instructs the tool to insert a chunk's code at that
-location when assembling the source. It does not itself call a
-function during execution.
+- Python 3.12 or newer, available as `python3`.
+- Git and `uv`, available in your terminal. See the
+  [installation instructions](https://docs.astral.sh/uv/getting-started/installation/)
+  if you need to install `uv`.
+- A text editor that saves UTF-8 files.
+- Internet access to fetch `unravel` and download its build tools during installation.
 
-<!-- REVIEW 3: Say "generated files" rather than "generated source". -->
-For example, an explanation of a reporting program might begin with the required
-report, introduce the calculations that produce it, and then describe input
-handling. The generated file may place imports and declarations first, followed
-by helper definitions and the code that calls them. This distinction allows the
-explanation to develop a sequence of ideas while the generated files satisfy
-the language's structural requirements.
+Check the command-line prerequisites:
 
-<!-- REVIEW 1: Say "chunk references". -->
-Three orders are involved: the order in which a reader encounters ideas, the
-order of code in the generated files, and the order in which instructions run.
-The author controls the first through the document and the second through
-chunk references; the resulting program determines the third.
+```bash
+python3 --version
+git --version
+uv --version
+```
 
-<!-- REVIEW 6: Fold the citation into the last sentence. -->
-There is no requirement to explain everything from the highest level downward.
-Knuth explicitly allows movement between an overview and individual details as
-the exposition requires. The final explanation can also be reorganized after
-the solution has been discovered; it need not reproduce the author's sequence
-of experiments and false starts
-([Knuth, section J](https://www.cs.tufts.edu/~nr/cs257/archive/literate-programming/01-knuth-lp.pdf)).
+Confirm that Python reports version 3.12 or newer. If a command is missing,
+install that prerequisite before continuing.
 
-## Explanation and implementation together
+Run the following steps in order in the same Bash session. Start in a directory
+where you can create a new directory named `unravel-tutorial`.
 
-Comments in conventional source files can also explain intent, assumptions,
-and design decisions. Literate programming adds a document structure that can
-develop those ideas independently of the layout of the generated files. The
-distinction concerns how the work is organized, rather than the number of
-comments it contains.
+## 1. Install `unravel`
 
-<!-- REVIEW 2: Call it the literate source. -->
-A single literate source also avoids maintaining a separate copy of the code solely for
-documentation. It does not establish that the prose is accurate: an explanation
-can still become outdated when an algorithm changes. Maintaining a literate
-program includes reviewing its reasoning alongside its code.
+Create a workspace and install release `v0.1.0` directly from its Git tag using
+your Python interpreter. `uv` fetches the repository for you:
 
-## Tangling and weaving
+```bash
+mkdir unravel-tutorial
+cd unravel-tutorial
+uv tool install --python python3 \
+  "git+https://github.com/gilhauer/unravel-markdown.git@v0.1.0"
+export PATH="$(uv tool dir --bin):$PATH"
+unravel --help
+```
 
-<!-- REVIEW 4: Connect tangling to the assembly described earlier. -->
-Knuth's original `WEB` system combined Pascal code with TeX documentation and
-provided two processing paths from the same literate source. Tangling is the
-assembly described above; weaving produces the document for reading:
+The help output should begin with:
 
-| Process and tool | Output | Subsequent step |
-| --- | --- | --- |
-| Tangling: `TANGLE` | Pascal source assembled from the chunks | A Pascal compiler produces the executable program. |
-| Weaving: `WEAVE` | A TeX document containing the explanation and formatted code | TeX typesets the document for reading. |
+```text
+usage: unravel [-h] [-o DIR] [--list | --check] source
+```
 
-<!-- REVIEW 1, 2, 6: Say "chunks" in the table, "literate source" here, and fold in the citation. -->
-Both outputs derive from the same literate source. Compilation and
-typesetting remain separate steps
-([Knuth, section B](https://www.cs.tufts.edu/~nr/cs257/archive/literate-programming/01-knuth-lp.pdf)).
+The distribution is called `unravel-markdown`; its command is `unravel`.
+`uv` installs the tool in its own environment. The `export` command makes `uv`'s
+tool executables available in this Bash session. For use in future sessions,
+see the [tool path setup instructions](https://docs.astral.sh/uv/concepts/tools/#tool-executables).
 
-<!-- REVIEW 7: Match Knuth's account of CWEB's history; fold in the citation. -->
-The approach extends beyond Pascal. Silvio Levy adapted `WEB` to C in 1987, and
-he and Knuth have since revised and extended the result, `CWEB`, together. Its
-corresponding tools are `CTANGLE` and `CWEAVE`
-([Knuth and Levy's account of `CWEB`](https://cs.stanford.edu/~knuth/cweb.html)).
+## 2. Create your Markdown source
 
-## Value and practical limits
+Create a directory for the example inside `unravel-tutorial`:
 
-The practical value of an explanation depends on what a future reader needs to
-understand. For a complex algorithm, that may be the reasoning behind a stopping
-condition. For a scientific calculation, it may be the assumptions connecting a
-model to its implementation. For long-lived software, it may be the reason a
-seemingly simpler alternative was rejected. These are situations in which
-preserving reasoning can be useful; they do not establish that every program
-needs an extended narrative.
+```bash
+mkdir first-project
+cd first-project
+```
 
-<!-- REVIEW 1, 2: Say "chunk boundaries" and "literate source". -->
-There are corresponding maintenance costs. Refactoring can require changes to
-the explanation, chunk boundaries, and references as well as the code.
-Editors, build tools, and debugging workflows must accommodate the relationship
-between the literate source and the generated files. The appropriate
-amount of explanation therefore depends on the audience, the complexity of the
-decisions, and the effort required to keep the document useful.
+<!-- REVIEW 2: Give the example real explanatory prose instead of an instruction to the author. -->
+In your text editor, create `hello.md` in this directory. Save the following
+contents as UTF-8. The triple-backtick lines shown inside the example are part
+of the file:
 
-## Literate programming in `unravel`
+````markdown
+# Hello
 
-<!-- REVIEW 3, 5: Name unravel instead of "It", and say "generated files". -->
-`unravel` applies the separation of explanatory order and generated-file order
-to Markdown documents. Authors combine prose with named code chunks and use
-references such as `<<greeting>>` to specify their placement in generated files.
-`unravel` provides the tangling part of the workflow. Markdown viewers and
-documentation tools present the explanation; `unravel` assembles the generated
-files for
-subsequent execution, compilation, or other processing.
+This program greets one city. The greeting is the whole point of the program,
+so we write it first and decide where it goes afterwards.
 
-Using Markdown makes the approach available without adopting `WEB` or its
-original languages. The writing task remains the same: develop an explanation
-that helps a reader understand why the program takes its particular form, and
-connect that explanation to the code that implements it.
+```python <<greeting>>
+message = "Hello, Tel Aviv!"
+print(message)
+```
 
-<!-- REVIEW 8: Point to the sieve example, which links here and, like Knuth's example, finds primes. -->
-The [first-project tutorial](../../tutorials/first-project/first-project.md)
-illustrates this approach by presenting a greeting before the program structure
-that incorporates it. The [sieve example](../../../examples/sieve/sieve.md)
-applies it to a longer argument and, like Knuth's own example, finds prime
-numbers.
+The program wraps the greeting in a `main()` function and calls it when the
+file runs as a script.
 
-## Further reading
+```python <<application/main.py>>
+def main():
+    <<greeting>>
 
-- **[“Literate Programming” (1984, free PDF)](https://www.cs.tufts.edu/~nr/cs257/archive/literate-programming/01-knuth-lp.pdf):**
-  the original argument and a complete `WEB` example that prints prime numbers.
-  Start here to see how Knuth develops an explanation alongside a working
-  program. The [publication record](https://doi.org/10.1093/comjnl/27.2.97)
-  identifies the article in *The Computer Journal*.
-- **[“Computer Programming as an Art” (1974, free PDF)](https://www.cs.bilkent.edu.tr/~canf/bilir_web/documents/knuth1974.pdf):**
-  Knuth's earlier account of programming as a creative activity involving
-  technical knowledge, taste, and judgment.
-- **[*Literate Programming* (1992), Knuth's book overview](https://cs.stanford.edu/~knuth/lp.html):**
-  a collection of essays and examples, including “How to Read a `WEB`,” excerpts
-  from the TeX and METAFONT programs, and discussions of mathematical writing.
-  “The Errors of TeX” and “The Error Log of TeX” extend the collection to the
-  analysis and history of defects in a substantial program. The linked page
-  provides the contents and publication details, rather than the full book.
+if __name__ == "__main__":
+    main()
+```
+````
 
-Related guides are listed in the [documentation index](../../README.md).
+<!-- REVIEW 1, 4: Say how a chunk is defined, and mark the period rule as current. -->
+A code block becomes a chunk when its opening fence names it:
+`` ```python <<greeting>> `` defines a chunk called `greeting`, a reusable
+helper chunk. `application/main.py` names the file to generate, relative to the
+output directory. `unravel` currently identifies file-producing chunks, called
+**output roots**, by a period in their name, so keep helper names such as
+`greeting` free of periods.
+
+<!-- REVIEW 5, 6: Say that blank lines are inserted but left blank; drop the out-of-place sentence. -->
+Think of `<<greeting>>` as an instruction to copy the lines from the `greeting`
+chunk and paste them at that location in the generated file. Keep the reference
+on its own line. `unravel` adds the reference's indentation to each line it
+inserts, leaving blank lines blank. In this Python example, the four spaces
+place the inserted statements inside `main()`.
+
+## 3. Preview the chunks
+
+From `first-project`, list the chunks in your document:
+
+```bash
+unravel hello.md --list
+```
+
+Expected output:
+
+```text
+  application/main.py [root]
+  greeting
+```
+
+<!-- REVIEW 3: Use the term "output root" introduced above. -->
+The `[root]` marker identifies the output root, the chunk that becomes a file.
+`greeting` supplies code for that file. This command lists the chunks without
+creating generated files.
+
+## 4. Generate and inspect the program
+
+Choose `generated` as the output directory:
+
+```bash
+unravel hello.md -o generated
+```
+
+Expected output:
+
+```text
+wrote generated/application/main.py
+```
+
+`unravel` creates the output directory and the nested `application` directory.
+Your example now has this layout:
+
+```text
+first-project/
+├── hello.md
+└── generated/
+    ├── .unravel-manifest.json
+    └── application/
+        └── main.py
+```
+
+<!-- REVIEW 7: Address the reader as "you" throughout. -->
+The manifest records the generated file and its hash so later `unravel` runs can
+check whether that file has been modified. Keep it with the generated output
+for future regeneration and verification. The generated Python
+program runs independently and does not need the manifest.
+
+Inspect the assembled Python:
+
+```bash
+cat generated/application/main.py
+```
+
+Expected contents:
+
+```python
+def main():
+    message = "Hello, Tel Aviv!"
+    print(message)
+
+if __name__ == "__main__":
+    main()
+```
+
+The helper's statements now appear inside `main()` with the indentation from
+the reference. The Markdown heading, prose, and fences remain in `hello.md`.
+
+## 5. Run the generated program
+
+```bash
+python3 generated/application/main.py
+```
+
+Expected output:
+
+```text
+Hello, Tel Aviv!
+```
+
+You have generated and run a Python program from your Markdown document.
+
+## 6. Check that the output is current
+
+Ask `unravel` to compare the generated files and manifest with your source:
+
+```bash
+unravel hello.md -o generated --check
+```
+
+Expected output:
+
+```text
+current generated/application/main.py
+```
+
+<!-- REVIEW 8: State the exit status, to contrast with the failing check in step 7. -->
+The command exits with status `0`. It checks the output without rewriting it.
+
+## 7. Change the source and regenerate
+
+Open `hello.md` and replace the greeting's `message` line with:
+
+```python
+message = "Hello, Haifa!"
+```
+
+Save `hello.md`. Keep making changes in this Markdown source; directly editing
+the generated Python file would cause `unravel` to refuse to overwrite it on a
+later run.
+
+Check the output again before regenerating:
+
+```bash
+unravel hello.md -o generated --check
+```
+
+This time, expect the following diagnostic and exit status `1`:
+
+```text
+unravel: generated content differs: application/main.py
+manifest content differs: .unravel-manifest.json
+```
+
+This is the expected result: the generated program and manifest still describe
+the old greeting. The check has reported the difference without changing them.
+
+Regenerate the program, run it, and check once more:
+
+```bash
+unravel hello.md -o generated
+python3 generated/application/main.py
+unravel hello.md -o generated --check
+```
+
+Expected output, in command order:
+
+```text
+wrote generated/application/main.py
+Hello, Haifa!
+current generated/application/main.py
+```
+
+Your Markdown change now appears in the running program, and the final check
+confirms that the generated output is current.
+
+## Continue learning
+
+You have practiced the edit, generate, run, and check cycle. Keep `hello.md` as
+the source you edit and let `unravel` maintain the generated program and manifest.
+
+<!-- REVIEW 9, 10: Match the link text to its heading; point to the explanation and the sieve example. -->
+For more about chunk syntax, see
+[Writing an unravel document](../../../README.md#writing-an-unravel-document).
+For behavior when generated files change or disappear, see
+[Generated-tree ownership](../../../README.md#generated-tree-ownership).
+For the ideas behind this approach, read
+[A brief introduction to literate programming](../../explanation/literate-programming/literate-programming.md).
+For a longer literate program, see the
+[sieve of Eratosthenes example](../../../examples/sieve/sieve.md).
+Return to the [documentation index](../../README.md) to find the other guides.
