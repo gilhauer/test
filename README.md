@@ -53,7 +53,7 @@ The function repeats the step until `b` is 0, then returns `a`.
 
 <kbd>Technique 2: GitHub alert</kbd>
 
-> [!NOTE]
+> [!TIP]
 > A code block whose opening line has a name in double angle brackets, such as
 > `<<the gcd function>>`, defines a **chunk**. Inside a chunk, a line such as
 > `<<replace the pair with a smaller one>>` is a **reference**: `unravel`
